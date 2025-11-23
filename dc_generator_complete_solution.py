@@ -11,6 +11,26 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.integrate import solve_ivp, odeint
 import sys
+import io
+
+# Set UTF-8 encoding for Windows console compatibility
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except:
+        pass
+
+# Define unit symbols with fallback
+try:
+    # Test if console supports Unicode
+    test = "Ω"
+    sys.stdout.write("")
+    OHM = "Ω"
+    A_TURNS = "A·turns"
+except:
+    OHM = "Ohm"
+    A_TURNS = "A-turns"
 
 class DCGeneratorSimulator:
     """Advanced DC Generator Simulator with Mathematical Modeling"""
@@ -126,8 +146,8 @@ class DCGeneratorSimulator:
         # Voltage drop in armature
         V_drop = Ia * self.armature_resistance
         print(f"Load Current (Ia):                 {Ia:.2f} A")
-        print(f"Armature Resistance (Ra):          {self.armature_resistance:.3f} Ω")
-        print(f"Voltage Drop (Ia × Ra):            {V_drop:.3f} V")
+        print(f"Armature Resistance (Ra):          {self.armature_resistance:.3f} {OHM}")
+        print(f"Voltage Drop (Ia x Ra):            {V_drop:.3f} V")
 
         # Required EMF at load
         E_load_required = V_load + V_drop
@@ -174,11 +194,11 @@ class DCGeneratorSimulator:
         MMF_total_check = MMF_shunt + MMF_series
         MMF_required = self.shunt_turns * If_total_required
 
-        print(f"Shunt MMF:      {MMF_shunt:.2f} A·turns")
-        print(f"Series MMF:     {MMF_series:.2f} A·turns")
-        print(f"Total MMF:      {MMF_total_check:.2f} A·turns")
-        print(f"Required MMF:   {MMF_required:.2f} A·turns")
-        print(f"Match Error:    {abs(MMF_total_check - MMF_required):.4f} A·turns")
+        print(f"Shunt MMF:      {MMF_shunt:.2f} {A_TURNS}")
+        print(f"Series MMF:     {MMF_series:.2f} {A_TURNS}")
+        print(f"Total MMF:      {MMF_total_check:.2f} {A_TURNS}")
+        print(f"Required MMF:   {MMF_required:.2f} {A_TURNS}")
+        print(f"Match Error:    {abs(MMF_total_check - MMF_required):.4f} {A_TURNS}")
 
         # Final summary
         print("\n" + "="*70)
@@ -525,8 +545,8 @@ def run_complete_analysis():
     for val in simulator.emf_data:
         print(f"{val:6.0f}", end=" ")
     print("\n")
-    print(f"Shunt winding: {simulator.shunt_turns} turns/pole, {simulator.shunt_resistance}Ω resistance")
-    print(f"Armature resistance (including series winding): {simulator.armature_resistance}Ω")
+    print(f"Shunt winding: {simulator.shunt_turns} turns/pole, {simulator.shunt_resistance}{OHM} resistance")
+    print(f"Armature resistance (including series winding): {simulator.armature_resistance}{OHM}")
     print(f"Target load current: {simulator.load_current}A")
     print()
     print("OBJECTIVE: Find series winding turns/pole to maintain constant")
@@ -544,15 +564,15 @@ def run_complete_analysis():
     print("SAVING DETAILED RESULTS")
     print(f"{'='*70}")
 
-    with open('dc_generator_results.txt', 'w') as f:
+    with open('dc_generator_results.txt', 'w', encoding='utf-8') as f:
         f.write("="*70 + "\n")
         f.write("DC GENERATOR ANALYSIS - DETAILED RESULTS\n")
         f.write("="*70 + "\n\n")
 
         f.write("PROBLEM SPECIFICATION:\n")
         f.write(f"  Shunt turns/pole: {simulator.shunt_turns}\n")
-        f.write(f"  Shunt resistance: {simulator.shunt_resistance} Ω\n")
-        f.write(f"  Armature resistance: {simulator.armature_resistance} Ω\n")
+        f.write(f"  Shunt resistance: {simulator.shunt_resistance} {OHM}\n")
+        f.write(f"  Armature resistance: {simulator.armature_resistance} {OHM}\n")
         f.write(f"  Target load: {simulator.load_current} A\n\n")
 
         f.write("SOLUTION:\n")

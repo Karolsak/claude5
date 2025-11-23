@@ -880,7 +880,7 @@ class DCGeneratorGUI:
         """Save simulation results"""
         try:
             results_content = self.results_text.get('1.0', 'end')
-            with open('dc_generator_results.txt', 'w') as f:
+            with open('dc_generator_results.txt', 'w', encoding='utf-8') as f:
                 f.write(results_content)
             messagebox.showinfo("Success", "Results saved to dc_generator_results.txt")
         except Exception as e:
