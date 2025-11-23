@@ -81,9 +81,34 @@ class VoltageRegulatorLab:
                                font=('Arial', 16, 'bold'))
         title_label.pack()
 
-        # Left panel - Controls
-        self.left_panel = ttk.Frame(self.main_container)
-        self.left_panel.grid(row=1, column=0, sticky='nsew', padx=5)
+        # Left panel container with scrollbar
+        left_container = ttk.Frame(self.main_container)
+        left_container.grid(row=1, column=0, sticky='nsew', padx=5)
+
+        # Create canvas and scrollbar for left panel
+        self.left_canvas = tk.Canvas(left_container, width=400)
+        left_scrollbar = ttk.Scrollbar(left_container, orient="vertical", command=self.left_canvas.yview)
+
+        # Scrollable frame inside canvas
+        self.left_panel = ttk.Frame(self.left_canvas)
+
+        # Configure canvas
+        self.left_canvas.configure(yscrollcommand=left_scrollbar.set)
+
+        # Pack scrollbar and canvas
+        left_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.left_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Create window in canvas
+        self.canvas_frame = self.left_canvas.create_window((0, 0), window=self.left_panel, anchor='nw')
+
+        # Update scrollregion when frame changes size
+        self.left_panel.bind('<Configure>', lambda e: self.left_canvas.configure(scrollregion=self.left_canvas.bbox("all")))
+
+        # Bind mousewheel to scrolling (both Windows and Linux)
+        self.left_canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.left_canvas.bind_all("<Button-4>", self._on_mousewheel)
+        self.left_canvas.bind_all("<Button-5>", self._on_mousewheel)
 
         # Right panel - Visualization
         self.right_panel = ttk.Frame(self.main_container)
@@ -92,6 +117,15 @@ class VoltageRegulatorLab:
 
         self.setup_control_panel()
         self.setup_visualization_panel()
+
+    def _on_mousewheel(self, event):
+        """Handle mousewheel scrolling for both Windows and Linux"""
+        if event.num == 5 or event.delta == -120:
+            self.left_canvas.yview_scroll(1, "units")
+        elif event.num == 4 or event.delta == 120:
+            self.left_canvas.yview_scroll(-1, "units")
+        else:
+            self.left_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
     def setup_control_panel(self):
         """Setup control panel with inputs and sliders"""
@@ -154,21 +188,40 @@ class VoltageRegulatorLab:
         self.results_text.pack(fill=tk.BOTH, expand=True)
 
         # Scrollbar for results
-        scrollbar = ttk.Scrollbar(self.results_frame, orient=tk.VERTICAL,
+        results_scrollbar = ttk.Scrollbar(self.results_frame, orient=tk.VERTICAL,
                                  command=self.results_text.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.results_text.config(yscrollcommand=scrollbar.set)
+        results_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.results_text.config(yscrollcommand=results_scrollbar.set)
 
-        # Control Buttons
-        button_frame = ttk.Frame(self.left_panel)
-        button_frame.pack(fill=tk.X, pady=5)
+        # Control Buttons - Prominent section
+        button_outer_frame = ttk.LabelFrame(self.left_panel, text="Simulation Controls", padding=10)
+        button_outer_frame.pack(fill=tk.X, pady=10, padx=5)
 
-        ttk.Button(button_frame, text="Start Simulation",
-                  command=self.start_simulation).pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
-        ttk.Button(button_frame, text="Stop",
-                  command=self.stop_simulation).pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
-        ttk.Button(button_frame, text="Reset",
-                  command=self.reset_simulation).pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+        # Start button (larger and green-styled)
+        self.start_btn = tk.Button(button_outer_frame, text="▶ START SIMULATION",
+                                   command=self.start_simulation,
+                                   bg='#28a745', fg='white', font=('Arial', 11, 'bold'),
+                                   relief=tk.RAISED, bd=3, cursor='hand2',
+                                   activebackground='#218838', activeforeground='white')
+        self.start_btn.pack(fill=tk.X, pady=3)
+
+        # Stop and Reset buttons in same row
+        control_row = ttk.Frame(button_outer_frame)
+        control_row.pack(fill=tk.X, pady=3)
+
+        self.stop_btn = tk.Button(control_row, text="⏸ STOP",
+                                  command=self.stop_simulation,
+                                  bg='#ffc107', fg='black', font=('Arial', 10, 'bold'),
+                                  relief=tk.RAISED, bd=2, cursor='hand2',
+                                  activebackground='#e0a800', activeforeground='black')
+        self.stop_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+        self.reset_btn = tk.Button(control_row, text="⟲ RESET",
+                                   command=self.reset_simulation,
+                                   bg='#dc3545', fg='white', font=('Arial', 10, 'bold'),
+                                   relief=tk.RAISED, bd=2, cursor='hand2',
+                                   activebackground='#c82333', activeforeground='white')
+        self.reset_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
     def create_slider(self, parent, label, variable, min_val, max_val, row, scale=1):
         """Create a labeled slider with value display"""
